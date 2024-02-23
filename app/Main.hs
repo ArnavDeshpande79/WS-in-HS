@@ -1,16 +1,12 @@
 module Main where
 import System.IO
 import System.Directory
-import qualified Types.Tokens as Types
-import qualified Types.Number as Number
 import qualified Parser.Parser as Parser
--- import Types
 main :: IO ()
 main = do
 	input <- readFile "app/sampleData/whitespace.txt"
-	let tokens = filter (/=Types.InvalidChar) . (map Types.charToToken) $ input
-	let parse = Parser.makeParseTree tokens
-	putStrLn . show $ parse
+	let chars = (Parser.tokenize . Parser.lexicalMap) input
+	putStrLn . show $ chars
 	return ()
     -- let parseTree = makeParseTree tokens
 -- grammar:
