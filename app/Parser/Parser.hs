@@ -11,10 +11,58 @@ lexicalMap (x:xs) | (x == Lex.space || x == Lex.tab || x == Lex.linefeed) = Lex.
 lexicalMap [] = []
 
 tokenize :: [Types.Character] -> [Tokens.Token]
-tokenize (x:xs) | (x == Types.SpaceChar) = Tokens.IMP [Types.SpaceChar]:rest where rest = stack xs
+-- tokenize (x:y:xs) = if (x == Types.TabChar && y == Types.SpaceChar) then (Tokens.IMP [x, y]):rest where rest = arithmetic xs
+-- 					else if (x == Types.TabChar && y == Types.TabChar) then (Tokens.IMP [x, y]):rest where rest = heap xs
+tokenize (x:y:xs) = case [x, y] of
+						[Types.TabChar, Types.SpaceChar] -> (Tokens.IMP [x, y]):rest where rest = arithmetic xs
+						[Types.TabChar, Types.TabChar] -> (Tokens.IMP [x, y]):rest where rest = heap xs
+						[Types.TabChar, Types.LineFeedChar] -> (Tokens.IMP [x, y]):rest where rest = io xs
+						_ -> []
+tokenize (x:xs) = case x of
+					Types.SpaceChar -> (Tokens.IMP [x]):rest where rest = stack xs
+					Types.LineFeedChar -> (Tokens.IMP [x]):rest where rest = flow xs
+					_ -> []
 tokenize _ = []
 
+io (x:y:xs) = case [x, y] of
+				[Types.SpaceChar, Types.SpaceChar] -> (Tokens.IMP [x]):rest where rest = tokenize xs
+				[Types.SpaceChar, Types.TabChar] -> (Tokens.IMP [x]):rest where rest = tokenize xs
+				[Types.TabChar, Types.SpaceChar] -> (Tokens.IMP [x]):rest where rest = tokenize xs
+				[Types.TabChar, Types.TabChar] -> (Tokens.IMP [x]):rest where rest = tokenize xs
+io _ = []
 
+flow (x:y:xs) = case [x, y] of
+					[Types.SpaceChar, Types.SpaceChar] -> (Tokens.Operator [x, y]):rest where rest = pushNumber xs
+					[Types.SpaceChar, Types.TabChar] -> (Tokens.Operator [x, y]):rest where rest = pushNumber xs
+					[Types.SpaceChar, Types.LineFeedChar] -> (Tokens.Operator [x, y]):rest where rest = pushNumber xs
+					[Types.TabChar, Types.SpaceChar] -> (Tokens.Operator [x, y]):rest where rest = pushNumber xs
+					[Types.TabChar, Types.TabChar] -> (Tokens.Operator [x, y]):rest where rest = pushNumber xs
+					[Types.TabChar, Types.LineFeedChar] -> (Tokens.Operator [x, y]):rest where rest = tokenize xs
+					[Types.LineFeedChar, Types.LineFeedChar] -> (Tokens.Operator [x, y]):rest where rest = tokenize xs
+					_ -> []
+flow _ = []
+
+-- label list = takeWhile notLineFeed list = pushNumber list
+
+heap (x:xs) = case x of
+				Types.SpaceChar -> r
+				Types.TabChar -> r
+			  where
+				r = (Tokens.IMP [x]):rest where rest = heap xs
+heap _ = []
+
+arithmetic (x:y:xs) | (x == Types.SpaceChar && y == Types.SpaceChar) = Tokens.Operator [x, y]:rest
+				    | (x == Types.SpaceChar && y == Types.TabChar) = Tokens.Operator [x, y]:rest
+				    | (x == Types.SpaceChar && y == Types.LineFeedChar) = Tokens.Operator [x, y]:rest
+				    | (x == Types.TabChar && y == Types.SpaceChar) = Tokens.Operator [x, y]:rest
+					| (x == Types.TabChar && y == Types.TabChar) = Tokens.Operator [x, y]:rest
+						where
+							rest = tokenize xs
+arithmetic (x:xs) | (x == Types.SpaceChar) = Tokens.Operator [x]:rest
+				  | (x == Types.TabChar) = Tokens.Operator [x]:rest
+					where
+						rest = tokenize xs
+arithmetic _ = []
 
 
 stack (x:y:xs) | (x == Types.LineFeedChar && y == Types.SpaceChar) = Tokens.Operator [x, y]:(tokenize xs)
