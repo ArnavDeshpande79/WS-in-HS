@@ -10,11 +10,36 @@ module Parser.Syntax where
 
 type Program = [Instruction]
 
-data Instruction = StackInstr StackOperation deriving Show
+data Instruction = StackInstr StackOperation
+				 | ArithmeticInstr ArithmeticOperation
+				 | HeapInstr HeapInstruction
+				 | FlowInstr FlowInstruction
+				 | IOInstr IOInstruction deriving Show
 
-data StackOperation = StackPush Int | StackDuplicate | StackCopy Int | StackSwap | StackDiscard | StackSlide Int deriving Show
+data StackOperation = StackPush Int
+					| StackDuplicate
+					| StackCopy Int
+					| StackSwap
+					| StackDiscard
+					| StackSlide Int deriving Show
 
-				-- | ArithmeticInstr
-				-- | HeapInsr
-				-- | FlowInsr
-				-- | IOInstr
+data ArithmeticOperation = Addition
+						 | Subtraction
+						 | Multiplication
+						 | IntegerDivision
+						 | Modulo deriving Show
+
+data HeapInstruction = Store
+					 | Retrieve deriving Show
+
+data FlowInstruction = Mark Int
+					 | Call Int
+					 | Jump Int
+					 | JumpIfZero Int
+					 | JumpIfNegative Int
+					 | ProgramEnd deriving Show
+
+data IOInstruction = OutputChar
+				   | OutputInt
+				   | ReadCharacter
+				   | ReadInt deriving Show
