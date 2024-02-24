@@ -2,6 +2,9 @@ module Main where
 import System.IO
 import System.Directory
 import qualified Parser.Parser as Parser
+import qualified Types.Types as Types
+import qualified Types.Tokens as Tokens
+
 main :: IO ()
 main = do
 	input <- readFile "app/sampleData/whitespace.txt"

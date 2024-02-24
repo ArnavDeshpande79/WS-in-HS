@@ -1,4 +1,4 @@
-module Parser.Parser (tokenize, lexicalMap, parse) where
+module Parser.Parser (tokenize, lexicalMap, parse, toNumber) where
 import qualified Types.Types as Types
 import qualified Types.Lex as Lex
 import qualified Types.Tokens as Tokens
@@ -20,13 +20,29 @@ tokenize list = case list of
 					_ -> []
 
 parse :: [Tokens.Token] -> Syntax.Program
-parse _ = []
+parse tokens = case tokens of
+					-- IMP list -> case list of
+					-- 				[Types.SpaceChar] -> Syntax.StackInstr ()
+					-- 				-- [Types.TabChar:Types.SpaceChar] ->
+					-- 				-- [Types.TabChar:Types.TabChar] ->
+					-- 				-- [Types.LineFeedChar] ->
+					-- 				-- [Types.TabChar:Types.LineFeedChar] ->
+					-- 				_ -> []
+					-- Operator list
+					-- Parameter list
+					Tokens.IMP i:Tokens.Operator o:Tokens.Parameter p:rest -> case (i, o) of
+																				([Types.SpaceChar], [Types.SpaceChar]) -> Syntax.StackInstr (Syntax.StackPush (toNumber p)):parse rest
+																				-- _ -> 
+					-- Tokens.IMP i:Tokens.Operator o:rest -> 
+					_ -> []
 
 io (x:y:xs) = case [x, y] of
-				[Types.SpaceChar, Types.SpaceChar] -> (Tokens.IMP [x]):rest where rest = tokenize xs
-				[Types.SpaceChar, Types.TabChar] -> (Tokens.IMP [x]):rest where rest = tokenize xs
-				[Types.TabChar, Types.SpaceChar] -> (Tokens.IMP [x]):rest where rest = tokenize xs
-				[Types.TabChar, Types.TabChar] -> (Tokens.IMP [x]):rest where rest = tokenize xs
+				[Types.SpaceChar, Types.SpaceChar] -> (Tokens.IMP [x]):r
+				[Types.SpaceChar, Types.TabChar] -> (Tokens.IMP [x]):r
+				[Types.TabChar, Types.SpaceChar] -> (Tokens.IMP [x]):r
+				[Types.TabChar, Types.TabChar] -> (Tokens.IMP [x]):r
+			  where
+				r = tokenize xs
 io _ = []
 
 flow (x:y:xs) = case [x, y] of
@@ -39,8 +55,6 @@ flow (x:y:xs) = case [x, y] of
 					[Types.LineFeedChar, Types.LineFeedChar] -> (Tokens.Operator [x, y]):rest where rest = tokenize xs
 					_ -> []
 flow _ = []
-
--- label list = takeWhile notLineFeed list = pushNumber list
 
 heap (x:xs) = case x of
 				Types.SpaceChar -> r
@@ -87,3 +101,11 @@ pushSign _ = []
 pushNumber list = takeWhile notLineFeed list
 
 notLineFeed = (/= Types.LineFeedChar)
+
+toNumber :: [Types.Character] -> Int
+toNumber (s:n:ns) = sign * r
+						where
+							_n = map (\e -> Utils.ifThenElse (s == Types.SpaceChar) 0 1) (n:ns)
+							r = sum (zipWith (\x y -> (2^(-y)) * x) (_n) [(-(length (_n) - 1))..0])
+							sign = (Utils.ifThenElse (s == Types.SpaceChar) 1 (-1))
+toNumber _ = 0
