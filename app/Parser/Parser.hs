@@ -32,10 +32,14 @@ parse tokens = case tokens of
 					-- Parameter list
 					(Tokens.IMP i):(Tokens.Operator o):Tokens.Parameter p:rest -> case (i, o) of
 																				([Types.SpaceChar], [Types.SpaceChar]) -> (Syntax.StackInstr (Syntax.StackPush (toNumberWithSign p))):parse rest
+																				([Types.SpaceChar], [Types.LineFeedChar, Types.SpaceChar]) -> (Syntax.StackInstr (Syntax.StackCopy (toNumber p))):parse rest
+																				([Types.SpaceChar], [Types.TabChar, Types.LineFeedChar]) -> (Syntax.StackInstr (Syntax.StackSlide (toNumber p))):parse rest
 																				_ -> []
 					(Tokens.IMP i):(Tokens.Operator o):rest -> case i of
 															[Types.SpaceChar] -> case o of
 																					([Types.LineFeedChar, Types.SpaceChar]) -> (Syntax.StackInstr Syntax.StackDuplicate):parse rest
+																					([Types.LineFeedChar, Types.TabChar]) -> (Syntax.StackInstr Syntax.StackSwap):parse rest
+																					([Types.LineFeedChar, Types.LineFeedChar]) -> (Syntax.StackInstr Syntax.StackDiscard):parse rest
 																					_ -> []
 															_ -> []
 					-- Tokens.IMP i:Tokens.Operator o:rest -> 
