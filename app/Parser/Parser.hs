@@ -12,11 +12,11 @@ lexicalMap [] = []
 
 tokenize :: [Types.Character] -> [Tokens.Token]
 tokenize list = case list of
-					Types.TabChar:Types.SpaceChar:xs -> (Tokens.IMP [Types.TabChar,Types.SpaceChar]):rest where rest = arithmetic xs
-					Types.TabChar:Types.TabChar:xs -> (Tokens.IMP [Types.TabChar,Types.TabChar]):rest where rest = heap xs
-					Types.TabChar:Types.LineFeedChar:xs -> (Tokens.IMP [Types.TabChar,Types.LineFeedChar]):rest where rest = io xs
-					Types.SpaceChar:_:xs -> (Tokens.IMP [Types.SpaceChar]):rest where rest = stack xs
-					Types.LineFeedChar:_:xs -> (Tokens.IMP [Types.LineFeedChar]):rest where rest = flow xs
+					-- Types.TabChar:Types.SpaceChar:xs -> (Tokens.IMP [Types.TabChar,Types.SpaceChar]):rest where rest = arithmetic xs
+					-- Types.TabChar:Types.TabChar:xs -> (Tokens.IMP [Types.TabChar,Types.TabChar]):rest where rest = heap xs
+					-- Types.TabChar:Types.LineFeedChar:xs -> (Tokens.IMP [Types.TabChar,Types.LineFeedChar]):rest where rest = io xs
+					Types.SpaceChar:xs -> (Tokens.IMP [Types.SpaceChar]):rest where rest = stack xs
+					-- Types.LineFeedChar:_:xs -> (Tokens.IMP [Types.LineFeedChar]):rest where rest = flow xs
 					_ -> []
 
 parse :: [Tokens.Token] -> Syntax.Program
@@ -30,8 +30,8 @@ parse tokens = case tokens of
 					-- 				_ -> []
 					-- Operator list
 					-- Parameter list
-					Tokens.IMP i:Tokens.Operator o:Tokens.Parameter p:rest -> case (i, o) of
-																				([Types.SpaceChar], [Types.SpaceChar]) -> Syntax.StackInstr (Syntax.StackPush (toNumber p)):parse rest
+					(Tokens.IMP i):(Tokens.Operator o):Tokens.Parameter p:rest -> case (i, o) of
+																				([Types.SpaceChar], [Types.SpaceChar]) -> (Syntax.StackInstr (Syntax.StackPush (toNumberWithSign p))):parse rest
 																				-- _ -> 
 					-- Tokens.IMP i:Tokens.Operator o:rest -> 
 					_ -> []
@@ -103,9 +103,13 @@ pushNumber list = takeWhile notLineFeed list
 notLineFeed = (/= Types.LineFeedChar)
 
 toNumber :: [Types.Character] -> Int
-toNumber (s:n:ns) = sign * r
-						where
-							_n = map (\e -> Utils.ifThenElse (s == Types.SpaceChar) 0 1) (n:ns)
-							r = sum (zipWith (\x y -> (2^(-y)) * x) (_n) [(-(length (_n) - 1))..0])
-							sign = (Utils.ifThenElse (s == Types.SpaceChar) 1 (-1))
+toNumber n = sum (zipWith (\x y -> (case x of
+									Types.SpaceChar -> 0
+									Types.TabChar -> 1
+									) * (2^y)
+					) n (reverse [0..(length n - 1)]))
 toNumber _ = 0
+
+
+toNumberWithSign :: [Types.Character] -> Int
+toNumberWithSign (s:s') = sign * toNumber s' where sign = if (s == Types.SpaceChar) then 1 else (-1)

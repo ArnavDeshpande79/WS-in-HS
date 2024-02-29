@@ -8,7 +8,7 @@ import qualified Types.Tokens as Tokens
 main :: IO ()
 main = do
 	input <- readFile "app/sampleData/whitespace.txt"
-	let chars = (Parser.tokenize . Parser.lexicalMap) input
+	let chars = (Parser.parse . Parser.tokenize . Parser.lexicalMap) input
 	putStrLn . show $ chars
 	return ()
     -- let parseTree = makeParseTree tokens
