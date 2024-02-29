@@ -16,7 +16,7 @@ tokenize list = case list of
 					Types.TabChar:Types.TabChar:xs -> (Tokens.IMP [Types.TabChar,Types.TabChar]):rest where rest = heap xs
 					Types.TabChar:Types.LineFeedChar:xs -> (Tokens.IMP [Types.TabChar,Types.LineFeedChar]):rest where rest = io xs
 					Types.SpaceChar:xs -> (Tokens.IMP [Types.SpaceChar]):rest where rest = stack xs
-					Types.LineFeedChar:_:xs -> (Tokens.IMP [Types.LineFeedChar]):rest where rest = flow xs
+					Types.LineFeedChar:xs -> (Tokens.IMP [Types.LineFeedChar]):rest where rest = flow xs
 					_ -> []
 
 parse :: [Tokens.Token] -> Syntax.Program
@@ -30,8 +30,6 @@ parse tokens = case tokens of
 																					([Types.LineFeedChar], [Types.SpaceChar, Types.LineFeedChar]) -> (Syntax.FlowInstr (Syntax.Jump (toNumber p))):r
 																					([Types.LineFeedChar], [Types.TabChar, Types.SpaceChar]) -> (Syntax.FlowInstr (Syntax.JumpIfZero (toNumber p))):r
 																					([Types.LineFeedChar], [Types.TabChar, Types.TabChar]) -> (Syntax.FlowInstr (Syntax.JumpIfNegative (toNumber p))):r
-																					([Types.LineFeedChar], [Types.TabChar, Types.LineFeedChar]) -> (Syntax.FlowInstr Syntax.SubRoutineEnd):r
-																					([Types.LineFeedChar], [Types.LineFeedChar, Types.LineFeedChar]) -> (Syntax.FlowInstr Syntax.ProgramEnd):r
 																					_ -> []
 																				  where r = parse rest
 					(Tokens.IMP i):(Tokens.Operator o):rest -> case i of
@@ -57,6 +55,9 @@ parse tokens = case tokens of
 																									[Types.TabChar, Types.SpaceChar] -> (Syntax.IOInstr Syntax.ReadCharacter):r
 																									[Types.TabChar, Types.TabChar] -> (Syntax.IOInstr Syntax.ReadInt):r
 																									_ -> []
+																[Types.LineFeedChar] -> case o of
+																							[Types.TabChar, Types.LineFeedChar] -> (Syntax.FlowInstr Syntax.SubRoutineEnd):r
+																							[Types.LineFeedChar, Types.LineFeedChar] -> (Syntax.FlowInstr Syntax.ProgramEnd):r
 																_ -> []
 															   where r = parse rest
 					_ -> []
@@ -77,7 +78,7 @@ flow (x:y:xs) = case [x, y] of
 					[Types.TabChar, Types.SpaceChar] -> (Tokens.Operator [x, y]):(pushSign xs)
 					[Types.TabChar, Types.TabChar] -> (Tokens.Operator [x, y]):(pushSign xs)
 					[Types.TabChar, Types.LineFeedChar] -> (Tokens.Operator [x, y]):rest where rest = tokenize xs
-					[Types.LineFeedChar, Types.LineFeedChar] -> (Tokens.Operator [x, y]):rest where rest = tokenize xs
+					[Types.LineFeedChar, Types.LineFeedChar] -> (Tokens.Operator [x, y]):[]
 					_ -> []
 flow _ = []
 
