@@ -12,37 +12,53 @@ lexicalMap [] = []
 
 tokenize :: [Types.Character] -> [Tokens.Token]
 tokenize list = case list of
-					-- Types.TabChar:Types.SpaceChar:xs -> (Tokens.IMP [Types.TabChar,Types.SpaceChar]):rest where rest = arithmetic xs
-					-- Types.TabChar:Types.TabChar:xs -> (Tokens.IMP [Types.TabChar,Types.TabChar]):rest where rest = heap xs
-					-- Types.TabChar:Types.LineFeedChar:xs -> (Tokens.IMP [Types.TabChar,Types.LineFeedChar]):rest where rest = io xs
+					Types.TabChar:Types.SpaceChar:xs -> (Tokens.IMP [Types.TabChar,Types.SpaceChar]):rest where rest = arithmetic xs
+					Types.TabChar:Types.TabChar:xs -> (Tokens.IMP [Types.TabChar,Types.TabChar]):rest where rest = heap xs
+					Types.TabChar:Types.LineFeedChar:xs -> (Tokens.IMP [Types.TabChar,Types.LineFeedChar]):rest where rest = io xs
 					Types.SpaceChar:xs -> (Tokens.IMP [Types.SpaceChar]):rest where rest = stack xs
-					-- Types.LineFeedChar:_:xs -> (Tokens.IMP [Types.LineFeedChar]):rest where rest = flow xs
+					Types.LineFeedChar:_:xs -> (Tokens.IMP [Types.LineFeedChar]):rest where rest = flow xs
 					_ -> []
 
 parse :: [Tokens.Token] -> Syntax.Program
 parse tokens = case tokens of
-					-- IMP list -> case list of
-					-- 				[Types.SpaceChar] -> Syntax.StackInstr ()
-					-- 				-- [Types.TabChar:Types.SpaceChar] ->
-					-- 				-- [Types.TabChar:Types.TabChar] ->
-					-- 				-- [Types.LineFeedChar] ->
-					-- 				-- [Types.TabChar:Types.LineFeedChar] ->
-					-- 				_ -> []
-					-- Operator list
-					-- Parameter list
 					(Tokens.IMP i):(Tokens.Operator o):Tokens.Parameter p:rest -> case (i, o) of
-																				([Types.SpaceChar], [Types.SpaceChar]) -> (Syntax.StackInstr (Syntax.StackPush (toNumberWithSign p))):parse rest
-																				([Types.SpaceChar], [Types.LineFeedChar, Types.SpaceChar]) -> (Syntax.StackInstr (Syntax.StackCopy (toNumber p))):parse rest
-																				([Types.SpaceChar], [Types.TabChar, Types.LineFeedChar]) -> (Syntax.StackInstr (Syntax.StackSlide (toNumber p))):parse rest
-																				_ -> []
-					(Tokens.IMP i):(Tokens.Operator o):rest -> case i of
-															[Types.SpaceChar] -> case o of
-																					([Types.LineFeedChar, Types.SpaceChar]) -> (Syntax.StackInstr Syntax.StackDuplicate):parse rest
-																					([Types.LineFeedChar, Types.TabChar]) -> (Syntax.StackInstr Syntax.StackSwap):parse rest
-																					([Types.LineFeedChar, Types.LineFeedChar]) -> (Syntax.StackInstr Syntax.StackDiscard):parse rest
+																					([Types.SpaceChar], [Types.SpaceChar]) -> (Syntax.StackInstr (Syntax.StackPush (toNumberWithSign p))):r
+																					([Types.SpaceChar], [Types.TabChar, Types.SpaceChar]) -> (Syntax.StackInstr (Syntax.StackCopy (toNumber p))):r
+																					([Types.SpaceChar], [Types.TabChar, Types.LineFeedChar]) -> (Syntax.StackInstr (Syntax.StackSlide (toNumber p))):r
+																					([Types.LineFeedChar], [Types.SpaceChar, Types.SpaceChar]) -> (Syntax.FlowInstr (Syntax.Mark (toNumber p))):r
+																					([Types.LineFeedChar], [Types.SpaceChar, Types.TabChar]) -> (Syntax.FlowInstr (Syntax.Call (toNumber p))):r
+																					([Types.LineFeedChar], [Types.SpaceChar, Types.LineFeedChar]) -> (Syntax.FlowInstr (Syntax.Jump (toNumber p))):r
+																					([Types.LineFeedChar], [Types.TabChar, Types.SpaceChar]) -> (Syntax.FlowInstr (Syntax.JumpIfZero (toNumber p))):r
+																					([Types.LineFeedChar], [Types.TabChar, Types.TabChar]) -> (Syntax.FlowInstr (Syntax.JumpIfNegative (toNumber p))):r
+																					([Types.LineFeedChar], [Types.TabChar, Types.LineFeedChar]) -> (Syntax.FlowInstr Syntax.SubRoutineEnd):r
+																					([Types.LineFeedChar], [Types.LineFeedChar, Types.LineFeedChar]) -> (Syntax.FlowInstr Syntax.ProgramEnd):r
 																					_ -> []
-															_ -> []
-					-- Tokens.IMP i:Tokens.Operator o:rest -> 
+																				  where r = parse rest
+					(Tokens.IMP i):(Tokens.Operator o):rest -> case i of
+																[Types.SpaceChar] -> case o of
+																						([Types.LineFeedChar, Types.SpaceChar]) -> (Syntax.StackInstr Syntax.StackDuplicate):r
+																						([Types.LineFeedChar, Types.TabChar]) -> (Syntax.StackInstr Syntax.StackSwap):r
+																						([Types.LineFeedChar, Types.LineFeedChar]) -> (Syntax.StackInstr Syntax.StackDiscard):r
+																						_ -> []
+																[Types.TabChar, Types.SpaceChar] -> case o of
+																										[Types.SpaceChar, Types.SpaceChar] -> (Syntax.ArithmeticInstr Syntax.Addition):r
+																										[Types.SpaceChar, Types.TabChar] -> (Syntax.ArithmeticInstr Syntax.Subtraction):r
+																										[Types.SpaceChar, Types.LineFeedChar] -> (Syntax.ArithmeticInstr Syntax.Multiplication):r
+																										[Types.TabChar, Types.SpaceChar] -> (Syntax.ArithmeticInstr Syntax.IntegerDivision):r
+																										[Types.TabChar, Types.TabChar] -> (Syntax.ArithmeticInstr Syntax.Modulo):r
+																										_ -> []
+																[Types.TabChar, Types.TabChar] -> case o of
+																									[Types.SpaceChar] -> (Syntax.HeapInstr Syntax.Store):r
+																									[Types.TabChar] -> (Syntax.HeapInstr Syntax.Retrieve):r
+																									_ -> []
+																[Types.TabChar, Types.LineFeedChar] -> case o of
+																									[Types.SpaceChar, Types.SpaceChar] -> (Syntax.IOInstr Syntax.OutputChar):r
+																									[Types.SpaceChar, Types.TabChar] -> (Syntax.IOInstr Syntax.OutputInt):r
+																									[Types.TabChar, Types.SpaceChar] -> (Syntax.IOInstr Syntax.ReadCharacter):r
+																									[Types.TabChar, Types.TabChar] -> (Syntax.IOInstr Syntax.ReadInt):r
+																									_ -> []
+																_ -> []
+															   where r = parse rest
 					_ -> []
 
 io (x:y:xs) = case [x, y] of

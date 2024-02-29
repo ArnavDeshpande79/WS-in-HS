@@ -37,6 +37,7 @@ data FlowInstruction = Mark Int
 					 | Jump Int
 					 | JumpIfZero Int
 					 | JumpIfNegative Int
+					 | SubRoutineEnd
 					 | ProgramEnd deriving Show
 
 data IOInstruction = OutputChar
