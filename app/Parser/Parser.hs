@@ -134,8 +134,6 @@ toNumber n = sum (zipWith (\x y -> (case x of
 									Types.TabChar -> 1
 									) * (2^y)
 					) n (reverse [0..(length n - 1)]))
-toNumber _ = 0
-
 
 toNumberWithSign :: [Types.Character] -> Int
 toNumberWithSign (s:s') = sign * toNumber s' where sign = if (s == Types.SpaceChar) then 1 else (-1)
