@@ -58,7 +58,7 @@ executable whitespace-interpreter
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.16.4.0,directory
+    build-depends:    base ^>=4.16.4.0,directory,parsec
 
     -- Directories containing source files.
     hs-source-dirs:   app

@@ -9,3 +9,7 @@ main = do
 	let chars = (Parser.parse . Parser.tokenize . Parser.lexicalMap) input
 	putStrLn . show $ chars
 	return ()
+
+-- todo:
+-- 1. use the parser monad to parse
+-- 2. make parse
